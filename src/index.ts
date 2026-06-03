@@ -118,50 +118,52 @@ server.resource(
 )
 
 server.resource("usage-guidance", "iconify://usage-guide", async (uri) => {
-  const frameworkDetails = FrameworkEnum.options
-    .map(async (framework) => {
-      const setup = await getSetupGuidance(framework as z.infer<typeof FrameworkEnum>)
-      let frameworkName = framework.charAt(0).toUpperCase() + framework.slice(1)
-      if (framework === "raw-svg") frameworkName = "Raw SVG"
-      if (framework === "unplugin-icons") frameworkName = "unplugin-icons"
-      if (framework === "iconify-icon-webcomponent") frameworkName = "IconifyIcon Web Component"
+  const frameworkDetails = (
+    await Promise.all(
+      FrameworkEnum.options.map(async (framework) => {
+        const setup = await getSetupGuidance(framework as z.infer<typeof FrameworkEnum>)
+        let frameworkName = framework.charAt(0).toUpperCase() + framework.slice(1)
+        if (framework === "raw-svg") frameworkName = "Raw SVG"
+        if (framework === "unplugin-icons") frameworkName = "unplugin-icons"
+        if (framework === "iconify-icon-webcomponent") frameworkName = "IconifyIcon Web Component"
 
-      let docLink = ""
-      switch (framework) {
-        case "unplugin-icons":
-          docLink = "https://github.com/unplugin/unplugin-icons"
-          break
-        case "iconify-icon-webcomponent":
-          docLink = "https://iconify.design/docs/icon-components/iconify-icon/"
-          break
-        case "react":
-          docLink = "https://iconify.design/docs/icon-components/react/"
-          break
-        case "vue":
-          docLink = "https://iconify.design/docs/icon-components/vue/"
-          break
-        case "svelte":
-          docLink = "https://iconify.design/docs/icon-components/svelte/"
-          break
-        case "lit":
-          docLink = "https://iconify.design/docs/icon-components/lit/"
-          break
-        case "ember":
-          docLink = "https://iconify.design/docs/icon-components/ember/"
-          break
-        default:
-          // No specific doc link for raw-svg
-          break
-      }
+        let docLink = ""
+        switch (framework) {
+          case "unplugin-icons":
+            docLink = "https://github.com/unplugin/unplugin-icons"
+            break
+          case "iconify-icon-webcomponent":
+            docLink = "https://iconify.design/docs/icon-components/iconify-icon/"
+            break
+          case "react":
+            docLink = "https://iconify.design/docs/icon-components/react/"
+            break
+          case "vue":
+            docLink = "https://iconify.design/docs/icon-components/vue/"
+            break
+          case "svelte":
+            docLink = "https://iconify.design/docs/icon-components/svelte/"
+            break
+          case "lit":
+            docLink = "https://iconify.design/docs/icon-components/lit/"
+            break
+          case "ember":
+            docLink = "https://iconify.design/docs/icon-components/ember/"
+            break
+          default:
+            // No specific doc link for raw-svg
+            break
+        }
 
-      return `## ${frameworkName}
+        return `## ${frameworkName}
 
 ### Setup
 ${setup}
 ${docLink ? `\nFor more details, see: ${docLink}` : ""}
 `
-    })
-    .join("\n")
+      })
+    )
+  ).join("\n")
 
   return {
     contents: [
@@ -264,7 +266,7 @@ server.tool(
       }
 
       if (framework) {
-        outputText += `\nSetup Guidance for ${framework}:\n${getSetupGuidance(framework)}\n`
+        outputText += `\nSetup Guidance for ${framework}:\n${await getSetupGuidance(framework)}\n`
       }
 
       outputText += `\nNote: Iconify API caches icon data in the browser for performance. Subsequent uses of the same icons will be faster.\n`
@@ -288,7 +290,7 @@ server.tool(
   async ({ iconSet, iconName, framework }) => {
     try {
       const snippet = await getIconSnippet(iconSet, iconName, framework)
-      const setup = getSetupGuidance(framework)
+      const setup = await getSetupGuidance(framework)
 
       return {
         content: [

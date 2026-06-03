@@ -12,7 +12,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "bun bun src/index.ts --outdir=build --target=node",
+    "build": "bun bun src/index.ts --outdir=build --target=node && mkdir -p build/templates/setup-guidance && cp src/templates/setup-guidance/*.md build/templates/setup-guidance/",
     "start": "bun run src/index.ts"
   },
   "keywords": [],

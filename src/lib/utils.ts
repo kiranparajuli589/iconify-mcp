@@ -12,7 +12,11 @@ import {
 } from "@/templates/snippets.js"
 import { promises as fs } from "fs"
 import path from "path"
+import { fileURLToPath } from "url"
 import { z } from "zod"
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
 export function toPascalCase(str: string): string {
   return str.replace(/(^\w|-\w)/g, (text) => text.replace(/-/, "").toUpperCase())
 }
@@ -56,11 +60,19 @@ export async function getIconSnippet(
 }
 
 export async function getSetupGuidance(framework: z.infer<typeof FrameworkEnum>): Promise<string> {
-  try {
-    const filePath = path.join(__dirname, `../templates/setup-guidance/${framework}.md`)
-    return await fs.readFile(filePath, "utf-8")
-  } catch (error) {
-    console.error("Error reading setup guidance:", error)
-    return "Setup guidance for this framework is not yet available."
+  // In production (bundled build/index.js), templates are copied next to the bundle.
+  // In development (bun run src/index.ts), fall back one level up from src/lib/.
+  const candidatePaths = [
+    path.join(__dirname, `templates/setup-guidance/${framework}.md`),
+    path.join(__dirname, `../templates/setup-guidance/${framework}.md`),
+  ]
+  for (const filePath of candidatePaths) {
+    try {
+      return await fs.readFile(filePath, "utf-8")
+    } catch {
+      // try next candidate
+    }
   }
+  console.error(`Setup guidance file not found for framework: ${framework}`)
+  return "Setup guidance for this framework is not yet available."
 }
