@@ -5,6 +5,7 @@ import { z } from "zod"
 import { ICONIFY_API_BASE, USER_AGENT } from "./lib/constants.js"
 import { FrameworkEnum } from "./lib/schemas.js"
 import { getIconSnippet, getSetupGuidance } from "./lib/utils.js"
+import { buildFrameworkDetails } from "./lib/usageGuidance.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
 const server = new McpServer({
@@ -118,52 +119,7 @@ server.resource(
 )
 
 server.resource("usage-guidance", "iconify://usage-guide", async (uri) => {
-  const frameworkDetails = (
-    await Promise.all(
-      FrameworkEnum.options.map(async (framework) => {
-        const setup = await getSetupGuidance(framework as z.infer<typeof FrameworkEnum>)
-        let frameworkName = framework.charAt(0).toUpperCase() + framework.slice(1)
-        if (framework === "raw-svg") frameworkName = "Raw SVG"
-        if (framework === "unplugin-icons") frameworkName = "unplugin-icons"
-        if (framework === "iconify-icon-webcomponent") frameworkName = "IconifyIcon Web Component"
-
-        let docLink = ""
-        switch (framework) {
-          case "unplugin-icons":
-            docLink = "https://github.com/unplugin/unplugin-icons"
-            break
-          case "iconify-icon-webcomponent":
-            docLink = "https://iconify.design/docs/icon-components/iconify-icon/"
-            break
-          case "react":
-            docLink = "https://iconify.design/docs/icon-components/react/"
-            break
-          case "vue":
-            docLink = "https://iconify.design/docs/icon-components/vue/"
-            break
-          case "svelte":
-            docLink = "https://iconify.design/docs/icon-components/svelte/"
-            break
-          case "lit":
-            docLink = "https://iconify.design/docs/icon-components/lit/"
-            break
-          case "ember":
-            docLink = "https://iconify.design/docs/icon-components/ember/"
-            break
-          default:
-            // No specific doc link for raw-svg
-            break
-        }
-
-        return `## ${frameworkName}
-
-### Setup
-${setup}
-${docLink ? `\nFor more details, see: ${docLink}` : ""}
-`
-      })
-    )
-  ).join("\n")
+  const frameworkDetails = await buildFrameworkDetails(getSetupGuidance)
 
   return {
     contents: [
